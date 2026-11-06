@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'sha256-MqgtjSTLEeCmsngR0eZmMRuCgOg/iaF7Q4fEQK7R6+M='; font-src 'self'; img-src 'self'; frame-src 'none'; child-src 'none'; object-src 'none'; script-src 'none'; connect-src 'none'; media-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Haz tu propio Rewind: pequeña guía para modificarlo</title>
+<meta name="author" content="Sergio Ayala">
+<link rel="stylesheet" href="guia.css">
+<style>@page { @top-left { content: "Rewind · Guía para modificarlo"; } @bottom-right { content: "PÁG. " counter(page) "/" counter(pages); } }
+@page :first { @top-left { content: none; } }</style>
+</head>
+<body>
+<main>
+
+<div class="hud" aria-hidden="true"><span>TV <b>UN55MU6100</b></span><span>Tizen <b>3.0</b> · <b>M47</b></span><span>Launcher · <b>V16.11.0</b> · <b>●</b> Probado</span></div>
+<div class="cover">
+<div class="label">
+<p class="kicker">Rewind · Guía para modificarlo</p>
+<h1>Haz tu propio Rewind</h1>
+<p class="lede">Cómo convertir el launcher Rewind en tu propia versión para tu televisor Samsung, y por dónde empezar si lo quieres en otro aparato.</p>
+<div class="row" aria-hidden="true"><span class="no">No. 01</span><span class="side">SIDE B<span>T-120 · VHS</span></span></div>
+<div class="bands" aria-hidden="true"></div>
+</div>
+<div class="icon"><img src="img/rewind-icon.png" alt="El icono de la app Rewind: un símbolo de rebobinar sobre la palabra REWIND, con franjas amarilla, naranja, roja y ciruela en la esquina."><p class="cap">launcher/icon.png</p></div>
+</div>
+<p class="meta">Escrita para Rewind 16.11.0 · noviembre de 2026 · Rewind es de Sergio Ayala, <a href="https://www.sergio-ayala.com">www.sergio-ayala.com</a> · GPL-3.0-or-later. English: <code>MODDING.pdf</code>.</p>
+
+<div class="note">
+<span class="t">Lee esto primero<span>UN55MU6100</span></span>
+<ul>
+<li><strong>Probado en un solo televisor:</strong> un Samsung UN55MU6100 (2017, Tizen 3.0, motor web Chromium M47). Nada más se ha probado.</li>
+<li>En televisores de 2018 en adelante <strong>probablemente</strong> necesites un certificado de Samsung ligado al DUID de tu televisor. Sin probar.</li>
+<li>Las rutas de esta guía son relativas a la raíz del repositorio.</li>
+</ul>
+</div>
+
+<div class="sep" aria-hidden="true"></div>
+<h2><span class="n">No. 01</span> Qué necesitas</h2>
+<ul>
+<li><strong>Un televisor Samsung con Developer Mode.</strong> En el televisor: abre Apps, escribe <code>12345</code> (con el mando o el teclado en pantalla), pon Developer mode en On, escribe la IP de tu computador, OK y reinicia el televisor.</li>
+<li><strong>Tizen Studio</strong> con sus herramientas de línea de comandos <code>tizen</code> y <code>sdb</code>.</li>
+<li><strong>Tu propio perfil de certificado</strong>, hecho con el Certificate Manager de Tizen Studio. Nunca uses el de otra persona.
+  <ul>
+  <li>En el televisor probado (2017), un perfil de tipo Samsung falló con <code>install failed[118]</code>. Un perfil de tipo Tizen (tu propio certificado de autor más el distribuidor de Tizen) sí instaló.</li>
+  <li>El perfil de tipo Samsung es un certificado de autor más un certificado de distribuidor emitido para el DUID de tu televisor (en el menú del televisor: Soporte › Contactar con Samsung › ID único del dispositivo).</li>
+  </ul></li>
+<li><strong>Python 3</strong> para <code>tools/stage_tv.py</code>. Node 22 o posterior solo si quieres el arnés de pruebas <code>tools/m47_check.mjs</code>.</li>
+</ul>
+<p class="small">Fuentes: Samsung Developers, «TV Device» (Developer Mode), «Creating Certificates» (DUID) y «Web Engine Specifications» (2017 = Tizen 3.0 / M47; 2018 = Tizen 4.0 / M56), leídas en noviembre de 2026. Los nombres de menú en español son traducción; Samsung los da en inglés.</p>
+
+<div class="sep" aria-hidden="true"></div>
+<h2><span class="n">No. 02</span> Lo primero que tienes que cambiar</h2>
+<p>Todo esto está en <code>launcher/config.xml</code>, salvo el icono. Si dejas los ids originales, tu versión choca con el Rewind original en cualquier televisor que tenga los dos.</p>
+<table>
+<thead><tr><th>Qué</th><th>Dónde</th><th>Cámbialo por</th></tr></thead>
+<tbody>
+<tr><td>Id de paquete y de app</td><td><code>&lt;tizen:application id="RewindSA01.Rewind" package="RewindSA01"&gt;</code></td><td>Los tuyos. Paquete: 10 caracteres, letras y números. Id de app: el paquete, un punto y un nombre.</td></tr>
+<tr><td>Id del widget</td><td><code>&lt;widget id="https://www.sergio-ayala.com/rewind"&gt;</code></td><td>Una dirección web que controles.</td></tr>
+<tr><td>Nombre, autor, descripción, versión</td><td><code>&lt;name&gt;</code>, <code>&lt;author&gt;</code>, <code>&lt;description&gt;</code>, <code>version="16.11.0"</code></td><td>Los tuyos. Conserva el crédito original en tu README.</td></tr>
+<tr><td>Icono</td><td><code>launcher/icon.png</code></td><td>Tu propia imagen; el build la copia a la raíz del paquete.</td></tr>
+<tr><td>Perfil de firma</td><td><code>-s &lt;tu-perfil&gt;</code> al empaquetar</td><td>Tu propio perfil, siempre.</td></tr>
+</tbody>
+</table>
+
+<div class="sep" aria-hidden="true"></div>
+<h2><span class="n">No. 03</span> Hazlo tuyo</h2>
+<p>El <code>.gitignore</code> de este repo es una lista blanca: un fichero nuevo que añadas (un logo, una pintura, un adaptador nuevo) se queda fuera de git hasta que le pongas una línea <code>!/ruta</code>. Compruébalo con <code>git add -A --dry-run</code>.</p>
+
+<h3>Las cintas (tus apps)</h3>
+<p>La lista es <code>var APPS=[…]</code> en <code>retro-bauhaus/P8e/p8e.js</code>, un objeto por cinta, en el orden del bucle:</p>
+<pre><code>{nm:"Netflix", logo:"netflix", tint:"#DE3B30", appId:"RN1MCdNq8t.Netflix", appAlias:""}</code></pre>
+<ul>
+<li><code>nm</code> rótulo · <code>logo</code> clave en <code>window.LOGOS</code> · <code>tint</code> color · <code>appId</code> el id de la app en tu televisor · <code>appAlias</code> segundo id opcional.</li>
+<li><code>tries</code> (opcional) es una lista ordenada de formas de abrir la app; gana la primera que funcione. La usan Netflix y el navegador.</li>
+<li>La entrada con <code>art:true</code> es el salvapantallas de arte; no abre ninguna app. Las cintas del sistema (Apps, Settings, Search) se añaden después de la lista, en <code>if(SYS_TAPES) APPS=APPS.concat([…])</code>.</li>
+<li>La cinta de YouTube abre <strong>TizenTube</strong> standalone (<code>xvvl3S1TT1.TizenTubeStandalone</code>), una app de terceros. Si no la usas, pon ahí el id de YouTube de tu televisor.</li>
+</ul>
+<p><strong>Lee los ids de tus apps.</strong> Los ids del código se leyeron en el televisor probado; los tuyos pueden ser otros. Con el televisor en Developer Mode:</p>
+<pre><code>sdb connect &lt;IP-del-TV&gt;
+sdb devices
+sdb shell 0 applist</code></pre>
+<p class="small">Otra forma: el panel de diagnóstico (pulsa ↑ ↑ ↓ ↓ ← → ← → en el mando) puede listar las apps con <code>getAppsInfo()</code>, pero solo si descomentas el privilegio <code>application.info</code> en <code>launcher/config.xml</code>. Vuelve a comentarlo al terminar.</p>
+
+<h3>Logos</h3>
+<p><code>window.LOGOS</code> en <code>retro-bauhaus/logos.js</code> asocia una clave a un SVG. Añade el tuyo con una clave nueva y usa esa clave en <code>logo:</code>, o pon el SVG directamente en la cinta con <code>lsvg:</code> (así lo hacen las cintas del sistema). El launcher pinta cada logo de un solo color y solo conserva su forma, así que funciona mejor una silueta plana. Sin logo, la cinta muestra su nombre. Los logos son marcas de sus dueños.</p>
+
+<h3>Arte de fondo</h3>
+<p>Las obras de fondo están en <code>retro-bauhaus/assets/art/</code>. Una obra nueva va en tres sitios:</p>
+<ol>
+<li>El JPEG en <code>retro-bauhaus/assets/art/</code>. El build solo copia los <code>.jpg</code> de esa carpeta (<code>GLOBS</code> en <code>tools/stage_tv.py</code>). Las originales miden 843 px de ancho.</li>
+<li>Una entrada en <code>var ART=[…]</code> en <code>retro-bauhaus/P8e/p8e.js</code>:
+<pre><code>{f:"../assets/art/16-la-tuya.jpg", id:0, a:"Artista", t:"Título", d:"Fecha", fx:0.5, fy:0.5}</code></pre>
+<code>fx</code>/<code>fy</code> es el punto de foco (de 0 a 1) que se usa cuando la imagen se desplaza; <code>id</code> es el número de catálogo de la fuente.</li>
+<li>Una línea en <code>retro-bauhaus/assets/art/manifest.jsonl</code> (<code>file</code>, <code>title</code>, <code>artist</code>, <code>date</code>, <code>source</code>, <code>id</code>): el registro de dónde sale cada imagen y su licencia. El launcher no lo lee al ejecutarse.</li>
+</ol>
+<p>Después pon en <code>var ART_N</code> (en <code>p8e.js</code>) el número de obras: es la cifra que se ve en la cinta de Arte. Usa solo imágenes que puedas publicar; las originales son de dominio público (CC0), del Art Institute of Chicago.</p>
+
+<h3>La ciudad del clima</h3>
+<p><code>retro-bauhaus/P8e/weather.js</code> usa Open-Meteo (sin clave de API). La ciudad del primer arranque es:</p>
+<pre><code>var DEFAULT_CFG={ciudad:"Bogotá",lat:4.71,lon:-74.07,live:true};</code></pre>
+<p>Pon tu ciudad y sus coordenadas <strong>con 2 decimales</strong>. Solo cuenta cuando el televisor no tiene nada guardado; tras el primer arranque el ajuste queda en el televisor (localStorage <code>p8e.weather.cfg</code>), y <code>P8EWeather.configure({ciudad, lat, lon, live})</code> lo cambia sin tocar el código. Los datos de Open-Meteo son CC BY 4.0: deja en pantalla el crédito «Data: Open-Meteo.com».</p>
+
+<h3>Lo que solo tiene sentido en Bogotá, Colombia</h3>
+<ul>
+<li><strong>Pico y placa</strong> (la restricción de circulación de Bogotá por placa): <code>retro-bauhaus/P8e/pyp.js</code>. La regla, los festivos de Colombia y la hora de Bogotá (UTC−5) van dentro; con red, contrasta con el texto oficial de <code>bogota.gov.co</code>. Ocupa las franjas derechas 1 a 3.</li>
+<li><strong>TRM</strong> (dólar y euro en pesos colombianos): <code>retro-bauhaus/P8e/rates.js</code>, con datos de <code>www.datos.gov.co</code> y del BCE (<code>www.ecb.europa.eu</code>). Ocupa las franjas 4 y 5.</li>
+</ul>
+<p>Para dejar el pico y placa sin que salga nunca a la red: <code>var PYP_NET=false;</code> en <code>pyp.js</code>. Para quitar un módulo:</p>
+<ol>
+<li>Borra su línea en <code>retro-bauhaus/P8e/index.html</code> (<code>&lt;script src="pyp.js"&gt;</code> o <code>&lt;script src="rates.js"&gt;</code>). Sin <code>pyp.js</code> la franja vuelve a «Daylight» (amanecer y ocaso); sin <code>rates.js</code>, las franjas 4 y 5 muestran «—».</li>
+<li>Quita el fichero de la lista <code>FIXED</code> en <code>tools/stage_tv.py</code>.</li>
+<li>En <code>launcher/config.xml</code>, quita su <code>&lt;access origin="…"&gt;</code> y ese mismo origen de <code>connect-src</code>.</li>
+<li><code>stage_tv.py</code> espera exactamente 4 orígenes <code>&lt;access&gt;</code> (<code>len(origins) != 4</code>). Cambia ese número por los que te queden o el build se detiene.</li>
+</ol>
+
+<div class="sep" aria-hidden="true"></div>
+<h2><span class="n">No. 04</span> Construir e instalar</h2>
+<ol class="steps">
+<li><strong>Prepara una copia limpia fuera del repo.</strong> El destino tiene que ser nuevo o estar vacío. El script copia una lista blanca de ficheros y escribe <code>MANIFEST.txt</code> con sus hashes.
+<pre><code>python3 tools/stage_tv.py ~/rewind-build \
+  --config launcher/config.xml --icon launcher/icon.png</code></pre>
+Si el sello privado del autor (<code>assets/brand/privado/sello-px-104.png</code>) no está, avisa y construye sin él. <code>--no-sello</code> lo deja fuera a propósito.</li>
+<li><strong>Empaqueta y firma con tu perfil.</strong>
+<pre><code>cd ~/rewind-build
+tizen package -t wgt -s &lt;tu-perfil&gt;</code></pre></li>
+<li><strong>Conecta e instala.</strong> Usa el nombre de dispositivo que muestra <code>sdb devices</code>.
+<pre><code>sdb connect &lt;IP-del-TV&gt;
+tizen install -n &lt;TuApp&gt;.wgt -t &lt;nombre-del-dispositivo&gt;</code></pre></li>
+<li><strong>Ábrela</strong> desde Apps, o con <code>sdb shell 0 was_execute &lt;paquete&gt;.&lt;nombre&gt;</code> (en el original: <code>RewindSA01.Rewind</code>).</li>
+<li><strong>Comprobaciones opcionales.</strong> <code>python3 tools/stage_tv.py --verify ~/rewind-build/&lt;TuApp&gt;.wgt</code> compara el paquete con la fuente byte a byte (sin contar las firmas). El motor de 2017 es Chromium M47, así que el código es ES5 a propósito; <code>node tools/m47_check.mjs --scan retro-bauhaus/P8e/p8e.js</code> marca la sintaxis más nueva sin abrir un navegador.</li>
+<li><strong>Al terminar</strong>, apaga el modo desarrollador. Si tienes que dejarlo encendido, pon como Host PC IP una dirección de tu red que no use ningún aparato (fuera del rango DHCP de tu router), nunca 127.0.0.1: esa es el propio televisor, y le abre el canal de desarrollo al software que corre en él. Si puedes, deja el televisor en una red aparte: ese modo deja que el aparato de esa IP instale apps. Sin probar: si Rewind sigue funcionando con el modo apagado.</li>
+</ol>
+<div class="note">
+<span class="t">Que arranque al encender<span>Última app</span></span>
+<p>En el televisor probado (menús en español): General › Funciones smart › <em>Pantalla de inicio automática</em> › <em>Última aplicación</em>. En otros modelos o idiomas el nombre puede cambiar (en inglés, algo como «Autorun Last App»; sin comprobar). <strong>Reanuda la última app que usaste</strong>; no fija una. Deja tu launcher abierto antes de apagar el televisor.</p>
+</div>
+
+<div class="sep" aria-hidden="true"></div>
+<h2><span class="n">No. 05</span> Llevarlo a otro TV o caja de streaming</h2>
+<p>Rewind solo está probado en el Samsung UN55MU6100 (Tizen 3.0). Para otro televisor o caja de streaming, primero hay que estudiar ese aparato.</p>
+<ol>
+<li><strong>Baja REA</strong> (Reverse Engineer Anything) de su repositorio oficial, <code>github.com/morluto/rea</code> (paquete npm <code>rea-agents</code>). Para binarios nativos usa un decompilador que ya tengas instalado, como Ghidra. Fija una versión concreta (un tag, una release o un commit) en vez de instalar lo último, comprueba la procedencia del paquete (<code>npm audit signatures</code>), instálalo con <code>--ignore-scripts</code> y analiza el firmware en una máquina virtual sin red y sin credenciales. Antes de usarlo, <code class="nw">export NO_UPDATE_NOTIFIER=1</code>; nunca uses <code class="nw">rea --update</code>, <code class="nw">rea setup</code> ni <code class="nw">npx -y</code> (bajan lo más nuevo o tocan la configuración de tus agentes).</li>
+<li><strong>Baja el firmware oficial</strong> del aparato que quieres modificar, de la web de soporte de su fabricante, no de espejos de terceros.</li>
+<li><strong>Analízalo con REA y un agente de IA cuyos términos permitan analizar binarios</strong> (revisa los términos de tu asistente; si el tuyo no lo permite, usa un modelo local). Averigua la versión del sistema y del motor web, cómo se instalan y se firman las apps de desarrollador, los ids de tus apps y la API para lanzar apps y leer las teclas del mando.</li>
+<li><strong>Pásaselo a tus agentes de IA:</strong> el repo de Rewind, esta guía y lo que encontraste, y pídeles que adapten Rewind a tu aparato. Estas son las piezas que dependen de Tizen:
+<ul>
+<li><code>retro-bauhaus/P8e/tizen-adapter.js</code> abre las apps (<code>tizen.application.launch</code>, <code>launchAppControl</code>) y registra las teclas del mando (<code>tvinputdevice.registerKey</code>). Un adaptador nuevo solo necesita <code>window.P8EApps.launch(app, onOk, onErr)</code>; <code>exit</code>, <code>exitGuard</code> y <code>wantKeys</code> son opcionales. El núcleo además lee la versión de la app con <code>tizen.application</code> y solo activa el sonido si existe <code>window.tizen</code>, y <code>retro-bauhaus/P8e/diag.js</code> (el panel de desarrollo) es solo para Tizen.</li>
+<li><code>launcher/config.xml</code>: el manifiesto del paquete de Tizen (ids, privilegios, orígenes permitidos, CSP).</li>
+<li>Los ids <code>appId</code> y <code>tries</code> de <code>var APPS</code>, y los códigos de tecla de <code>var KC</code> (<code>10009</code> es el Back de Samsung), los dos en <code>retro-bauhaus/P8e/p8e.js</code>.</li>
+<li>El <code>webapis.js</code> de Samsung (modelo del televisor y estado de la red), que <code>tools/stage_tv.py</code> activa solo en el paquete.</li>
+</ul>
+El código es ES5 por el motor de 2017 (Chromium M47); los motores más nuevos también lo ejecutan.</li>
+</ol>
+<p class="small">Con cuidado: hazlo solo con un aparato tuyo y para que tu propia app funcione con él. La ley sobre ingeniería inversa cambia según el país. No publiques el firmware ni código descompilado en tu fork. Trata los forks ajenos y las cadenas del firmware como entrada no confiable para tus agentes: pueden esconder órdenes. Esto no es asesoría legal.</p>
+
+<div class="sep newpage" aria-hidden="true"></div>
+<h2><span class="n">No. 06</span> Letra pequeña</h2>
+<ul>
+<li>Rewind es un proyecto independiente, sin afiliación ni respaldo de Samsung ni de ninguna de las apps que abre. Las marcas y los logos son de sus dueños.</li>
+<li>Developer Mode es una herramienta oficial de Samsung, pero lo que instales en tu televisor es responsabilidad tuya.</li>
+<li>Rewind tiene licencia GPL-3.0-or-later. Si publicas tu mod o compartes su <code>.wgt</code>, publica también su código con la misma licencia, conserva los avisos de copyright y de licencia originales, y di qué cambiaste y cuándo.</li>
+</ul>
+<footer class="end">Rewind, de Sergio Ayala · <a href="https://www.sergio-ayala.com">www.sergio-ayala.com</a> · mail@sergio-ayala.com</footer>
+<img class="fire" src="img/fire.svg" alt="">
+
+</main>
+</body>
+</html>

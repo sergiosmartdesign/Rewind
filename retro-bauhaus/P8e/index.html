@@ -1,0 +1,57 @@
+<!doctype html>
+<!-- SPDX-FileCopyrightText: 2026 Sergio Ayala
+     SPDX-License-Identifier: GPL-3.0-or-later -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="author" content="Sergio Ayala <mail@sergio-ayala.com>">
+<!-- v11 (revisión de seguridad H2): ninguna petición lleva Referer (en H3 la página va por la LAN: IP, puerto y query) -->
+<meta name="referrer" content="no-referrer">
+<title>P8e · Cassette V3 — info bands at rest over live WebGL art, VHS Art</title>
+<!-- P8e = mezcla de P8d: las 5 franjas a cada lado de 90s.html (sin su lettering), HUD y barra inferior,
+     sobre el FONDO de index.html (arte WebGL vivo). v6: las franjas son SÓLO el panel de información (el
+     tiempo) y sólo aparecen con conexión, con info cargada y tras IDLE_MS sin teclas en la app enfocada;
+     navegar las saca y, si se pierde la conexión, salen solas. El rótulo de la app va bajo las franjas de
+     la derecha. La entrada 15 «Arte» es un VHS V3 con el icono Mona Lisa: Enter → salvapantallas.
+     Copia de P8d (no lo enlaza ni lo toca). Offline: WebGL1 propio (gl.js; three.js r128 hasta la v11), logos.js compartido
+     (sólo lectura), fuentes OFL locales, datos del clima de un FIXTURE local. NO carga core.js.
+     v3: icono Mona Lisa v2 dibujada a mano (leído de ../assets/icons/), MODO TV por defecto (lo de prueba
+     sólo con ?dev=1) y lienzo fijo de 1920×1080 escalado a la ventana con letterbox (#tv, lo crea p8e.js).
+     v4: HUD en tres zonas (modelo del TV · APP NN/15 · app, versión y red) y crédito + hora abajo a la derecha.
+     Dirección de arte: 2026-10-23 (H2).
+     v11: funciona en el motor web del TV 2017 (Chromium M47); ver README, sección v11. Ya no hay
+     body[data-bg]: el fondo es siempre el arte.
+     v12: sin three.js (gl.js, WebGL1 propio, ES5) y toda la interfaz en inglés (lang="en"). README, v12.
+     v14: adaptador Tizen (tizen-adapter.js) y panel de diagnóstico (diag.js) para el TV. README, v14.
+     v16.9: sin panel de sugerencias; rótulo bajo el cassette; pyp.js (pico y placa). README, v16.9. -->
+<link rel="stylesheet" href="p8e.css">
+</head>
+<body>
+<!-- v4 · SÓLO EN EL .wgt (Tizen), antes de p8e.js: la librería de Samsung que da webapis.productinfo
+     (modelo del TV) y webapis.network (gateway). En localhost no existe y daría un 404, por eso va comentada.
+     v14: tools/stage_tv.py la descomenta SÓLO en la copia del .wgt (este fichero no cambia).
+<script src="$WEBAPIS/webapis/webapis.js"></script>
+-->
+<!-- v12: sin three.js. gl.js = WebGL1 propio, ES5 (el arte y el portal); three r128 no se analiza en M47 -->
+<script src="gl.js"></script>
+<script src="../logos.js"></script>
+<script src="weather.js"></script>
+<!-- v16.9: pico y placa de Bogotá (regla local + festivos de Colombia; contraste con bogota.gov.co sólo si
+     hay red). ES5, sin DOM ni dependencias; p8e.js lo pinta en la franja derecha 4. Sin él, la franja vuelve a «Daylight». -->
+<script src="pyp.js"></script>
+<!-- v16.10 (2026-10-26): TRM dólar (datos.gov.co) y TRM euro (TRM × BCE) en COP para las franjas derechas 4 y 5.
+     ES5, sin DOM ni dependencias; si falta, esas dos franjas quedan en «—» y el resto del panel no cambia. -->
+<script src="rates.js"></script>
+<!-- v14: el adaptador Tizen (window.P8EApps → tizen.application.launch, id y alias). Sin window.tizen
+     (localhost) no se instala y p8e.js sigue con su pantalla de paso de maqueta. Separado del núcleo (ADR-0005 §4). Va ANTES de
+     sound.js para que sound.js siga justo delante de p8e.js (el orden que necesita el sonido); no registra listeners ni depende de nada. -->
+<script src="tizen-adapter.js"></script>
+<!-- v13 · fase 2: el sonido (Web Audio procedural, ES5). ANTES de p8e.js: su desbloqueo escucha la 1.ª tecla en
+     captura, antes que los manejadores del launcher, y así el primer sonido ya suena. Sin él, p8e.js funciona igual (snd() es inocuo). -->
+<script src="sound.js"></script>
+<script src="p8e.js"></script>
+<!-- v14: panel de diagnóstico (?dev=1&diag=1, o en el mando ↑↑↓↓←→←→). Cerrado no hace nada salvo vigilar esa secuencia. -->
+<script src="diag.js"></script>
+</body>
+</html>

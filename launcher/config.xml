@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-FileCopyrightText: 2026 Sergio Ayala
+     SPDX-License-Identifier: GPL-3.0-or-later -->
+<!--
+  SAMPLE Tizen Web Application manifest for packaging this launcher as a
+  .wgt for the Samsung UN55MU6100. This is a MODEL, not a built package:
+  the appid, author, and the exact privilege set must be confirmed against
+  the device firmware and Samsung Tizen TV docs before signing/packaging.
+
+  Package (reference, not run here):
+    tizen package -t wgt -s <certificate-profile> (y luego la carpeta de build; sin doble guion en comentario XML)
+    tizen install -n Rewind.wgt -t <TV-target>
+-->
+<widget xmlns="http://www.w3.org/ns/widgets"
+        xmlns:tizen="http://tizen.org/ns/widgets"
+        id="https://www.sergio-ayala.com/rewind"
+        version="16.11.0"
+        viewmodes="maximized">
+
+  <!-- Nombre decidido por el autor (2026-10-25): «Rewind» (antes provisional «WARP DRIVE»). -->
+  <name>Rewind</name>
+  <description>Rewind — custom TV launcher, Mark I (portfolio piece).</description>
+  <author href="https://www.sergio-ayala.com" email="mail@sergio-ayala.com">Sergio Ayala</author>
+
+  <!-- Arranca DIRECTO en P8e/index.html, SIN ?dev=1 (la barra de ayuda, el banco, las sondas y el modo remoto son
+       sólo dev; decisión del autor, 2026-10-25). La raíz index.html de stage_tv.py redirige con un script en
+       línea que la CSP (script-src 'self') bloquearía. Este config.xml va en la raíz de la copia de stage_tv.py.
+       Icono (2026-10-25, a petición del autor): icon.png 512×423 (cinta VHS + franjas 90s + «◄◄ REWIND»
+       en Gugi; fuente icon-source.html junto a este fichero). Va en la raíz del .wgt. -->
+  <content src="P8e/index.html"/>
+  <icon src="icon.png"/>
+
+  <!-- Samsung TV application category. package = 10 caracteres [0-9A-Za-z]. -->
+  <tizen:application id="RewindSA01.Rewind"
+                     package="RewindSA01"
+                     required_version="2.4"/>
+  <tizen:profile name="tv-samsung"/>
+
+  <!-- Full-HD TV surface -->
+  <tizen:setting screen-orientation="landscape"
+                 context-menu="disable"
+                 background-support="disable"
+                 encryption="disable"
+                 hwkey-event="enable"/>
+
+  <!-- ============ PRIVILEGES ============ -->
+  <!-- Launch other installed apps (Netflix, Disney+, ...) -->
+  <tizen:privilege name="http://tizen.org/privilege/application.launch"/>
+  <!-- Register/handle remote-control keys (D-pad, Return, color keys) -->
+  <tizen:privilege name="http://tizen.org/privilege/tv.inputdevice"/>
+  <!-- (tv.window retirado: el launcher no lo usa.) -->
+
+  <!-- ===== RED (v16.9, decisión del autor 2026-10-26): ABIERTA SOLO a bogota.gov.co =====
+       Para el contraste del pico y placa (P8e/pyp.js): GET de texto al boletin del mes / la etiqueta de pico y placa del portal
+       de la Alcaldia, solo con red, <= 3 por intento, <= 3 intentos al dia. Superficie exacta: README de P8e, v16.9.
+       Pasó revisión de seguridad (2026-10-26): pyp.js recorta el texto en una sola pasada y el origen va con
+       subdomains="false". Si en el TV la fila 7 del panel da «network» siempre (CORS del WRT), se puede cerrar la red:
+       PYP_NET=false y quitar privilegio, <access> y connect-src. -->
+  <tizen:privilege name="http://tizen.org/privilege/internet"/>
+  <access origin="https://bogota.gov.co" subdomains="false"/>
+
+  <!-- ===== RED v16.10 (2026-10-26; decisión del autor): clima real y tasas =====
+       Tres origenes mas, los tres HTTPS y con subdominios="false":
+         · api.open-meteo.com  clima ACTUAL (weather.js; coordenadas de Bogota, 4,71/-74,07, sembradas en el TV)
+         · www.datos.gov.co   TRM oficial del dolar (rates.js, dataset Socrata ceyp-9c7c)
+         · www.ecb.europa.eu   tipo de cambio de referencia USD/EUR del BCE (rates.js; el euro se calcula TRM x BCE)
+       Superficie exacta (que se pide, cuanto y con que topes): README de P8e, seccion v16.10, y las cabeceras de
+       weather.js / rates.js. Los tres orígenes pasaron revisión de seguridad. -->
+  <access origin="https://api.open-meteo.com" subdomains="false"/>
+  <access origin="https://www.datos.gov.co" subdomains="false"/>
+  <access origin="https://www.ecb.europa.eu" subdomains="false"/>
+
+  <!-- ===== Privilegios de Samsung (v14) =====
+       Nivel "public" en la tabla PRIVILEGE_INFO del firmware de este TV (pasada 2).
+       Ninguno de los dos abre internet (la unica red es bogota.gov.co, mas arriba; v16.9).
+       - productinfo: el HUD lee el modelo con webapis.productinfo.getRealModel() / getModel().
+         El mismo espacio de nombres expone getDuid(): NO llamar a productinfo.getDuid() (ni getModelCode).
+         Ni P8e ni el panel de diagnostico lo hacen; el arnes lo comprueba con un señuelo (suite diag).
+       - network.public: webapis.network.isConnectedToGateway() y addNetworkStateChangeListener
+         (estados 1 a 8; 4 = GATEWAY_CONNECTED, 5 = GATEWAY_DISCONNECTED). -->
+  <tizen:privilege name="http://developer.samsung.com/privilege/productinfo"/>
+  <tizen:privilege name="http://developer.samsung.com/privilege/network.public"/>
+
+  <!-- application.info (public): solo hace falta si tizen.application.getAppsInfo() se usa en produccion.
+       Hoy getAppsInfo() solo se llama desde el panel de diagnostico (diag.js), al pulsar su boton. Si en el TV ese
+       volcado devuelve SecurityError y hace falta para leer los ids de Disney+ y las demas, descomentar SOLO para
+       la sesion de medida y volver a comentarlo despues:
+  <tizen:privilege name="http://tizen.org/privilege/application.info"/>
+  -->
+
+  <!-- CSP (revisada). connect-src: self y los cuatro orígenes HTTPS de los <access> de arriba, ni uno más:
+       bogota.gov.co (v16.9, el XHR de pyp.js), api.open-meteo.com, www.datos.gov.co y www.ecb.europa.eu (v16.10).
+       stage_tv.py comprueba que connect-src y los <access> coinciden. Todos con subdomains=false. -->
+  <tizen:content-security-policy>default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' https://bogota.gov.co https://api.open-meteo.com https://www.datos.gov.co https://www.ecb.europa.eu; object-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; referrer no-referrer</tizen:content-security-policy>
+
+</widget>

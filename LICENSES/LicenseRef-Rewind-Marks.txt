@@ -1,0 +1,18 @@
+Rewind - brand marks in retro-bauhaus/logos.js
+
+retro-bauhaus/logos.js holds SVG drawings of the logos of the apps that Rewind
+opens (streaming services, game consoles). They come from simple-icons
+(https://simpleicons.org, CC0 1.0) and from Wikimedia Commons, as listed in the
+file header and in THIRD-PARTY.md. The "navegador" and "hdmi" icons were drawn
+for this project and are GPL-3.0-or-later, like the rest of Rewind.
+
+Each logo is a trademark of its owner. A copyright license on the drawing (CC0,
+public domain or GPL) is not a trademark license: neither this project nor its
+licenses grant any right to use those marks. They are included only to
+identify the app each tape opens, as the TV's own home screen does.
+
+Rewind is an independent project. It is not affiliated with, endorsed or
+sponsored by Samsung or by the owner of any of these marks.
+
+If you hold the rights to one of these marks and want it removed, open an issue
+on the repository or write through https://www.sergio-ayala.com

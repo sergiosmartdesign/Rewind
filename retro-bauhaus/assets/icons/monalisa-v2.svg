@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Mona Lisa">
+  <!-- Mona Lisa v2 · 2026-10-23 · dibujado a mano sobre la obra de Leonardo (dominio publico).
+       Interior en coordenadas de la obra (500x745) escaladas al hueco del marco. Sin raster, sin texto,
+       sin referencias externas. Multitono: integrar SIN tinte source-in (ver hoja). -->
+  <g transform="translate(22 8) scale(0.112 0.11275)">
+    <!-- cielo y paisaje: dos bandas, horizonte izquierdo mas bajo que el derecho -->
+    <rect x="0" y="0" width="500" height="745" fill="#B9C79F"/>
+    <path d="M0 300 Q80 272 150 292 L350 206 Q420 192 500 208 V745 H0 Z" fill="#6E8E59"/>
+    <!-- figura oscura: melena + vestido en piramide -->
+    <path d="M236 62 C290 60 330 95 340 150 C352 210 345 270 360 320 C380 350 430 380 470 420 L500 440 V745 H0 V480 C40 440 90 400 128 360 C150 320 140 260 148 200 C152 120 180 64 236 62 Z" fill="#2A1C14"/>
+    <path d="M150 210 C150 120 182 58 236 56 C292 56 334 96 344 160" fill="none" stroke="#5C4430" stroke-width="7" stroke-linecap="round" opacity=".9"/>
+    <!-- escote y cuello -->
+    <path d="M205 250 H272 L280 300 C310 320 345 330 365 340 L360 372 C300 395 220 398 165 378 L170 345 C190 330 200 310 205 295 Z" fill="#DDA968"/>
+    <!-- rostro ovalado -->
+    <ellipse cx="238" cy="185" rx="58" ry="84" fill="#F4CC8A"/>
+    <!-- melena con raya al medio: dos cortinas que bajan desde la raya hasta los hombros -->
+    <path d="M238 92 C222 104 196 118 184 160 C178 200 183 240 178 270 C172 300 160 330 150 350 L128 360 C150 320 140 260 148 200 C152 120 180 64 236 62 Z" fill="#2A1C14"/>
+    <path d="M238 92 C254 104 284 116 294 160 C302 200 298 240 305 275 C312 305 330 330 360 345 L360 320 C345 270 352 210 340 150 C330 95 290 60 236 62 Z" fill="#2A1C14"/>
+    <path d="M237 66 L238 94" stroke="#6B4A2E" stroke-width="7" stroke-linecap="round"/>
+    <!-- ojos y sonrisa -->
+    <ellipse cx="212" cy="172" rx="10" ry="4.5" fill="#2A1C14"/>
+    <ellipse cx="257" cy="170" rx="10" ry="4.5" fill="#2A1C14"/>
+    <path d="M222 229 Q239 235 256 225" fill="none" stroke="#7A4A2A" stroke-width="5" stroke-linecap="round"/>
+    <!-- mangas -->
+    <path d="M30 520 C80 520 150 560 190 600 L170 650 C120 620 70 600 20 600 Z" fill="#8E5E26"/>
+    <path d="M480 570 C430 580 360 600 300 615 L300 660 C360 655 430 640 490 640 Z" fill="#8E5E26"/>
+    <!-- manos cruzadas: la derecha encima de la izquierda -->
+    <path d="M120 625 C150 615 200 640 210 670 C200 690 150 695 115 680 Z" fill="#DDA968"/>
+    <path d="M160 600 C200 585 260 590 300 610 C320 625 315 655 290 660 C250 665 200 650 165 640 Z" fill="#F4CC8A"/>
+  </g>
+  <!-- marco dorado -->
+  <path d="M17 3 H83 V97 H17 Z M22 8 V92 H78 V8 Z" fill="#FEC631" fill-rule="evenodd"/>
+</svg>

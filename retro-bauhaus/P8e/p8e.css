@@ -1,0 +1,604 @@
+/* SPDX-FileCopyrightText: 2026 Sergio Ayala
+ * SPDX-License-Identifier: GPL-3.0-or-later */
+/* P8e · Cassette V3 — franjas de información en reposo sobre el arte WebGL vivo — 2026-10-23.
+   Copia de P8d/p8d.css (P8d no se toca); body[data-bg="art"].
+   Autor de lo publicable: Sergio Ayala <mail@sergio-ayala.com>.
+
+   PALETA 90s (medida sobre ref-05; el 5º por píxel):
+     --y #FEC631 · --o #F9591F · --r #F21E2C · --b #B21D3B · --p #6A1D41 · --cr #FFFEE8
+     --k #26121B (ciruela casi negra, DERIVADA de --p para las píldoras sobre arte; no es de la ref)
+   CONTRASTE: ver la tabla del informe (tools/wcag.py). Resumen de las franjas:
+     ink/y 11.00 · ink/o 5.34 · cr/r 4.12 (sólo grande) · cr/b 6.58 · cr/p 11.04 · y/p 7.15
+
+   GUARDAS 3D (una propiedad de un ancestro aplana el 3D de sus descendientes; una sola raíz preserve-3d por
+   escena), IGUAL que P8c/P8d:
+   · .viewport = cámara (perspective). .world = ÚNICA raíz preserve-3d del corredor.
+     NADA de overflow/filter/opacity<1/clip-path/mask/isolation/contain/will-change en .world.
+   · Las franjas (.bands) viven FUERA de la cadena 3D (capa fija debajo del corredor).
+   · La ventana del cassette NO es recorte: son píxeles que no existen (destination-out).
+
+   v3 (2026-10-23) · LIENZO DEL TV: todo se maqueta en #tv, un lienzo FIJO de 1920×1080 px CSS (la
+   resolución de las apps web del UN55MU6100, Tizen 3.0), escalado de forma uniforme a la ventana por
+   p8e.js (fitStage) con letterbox negro. Por eso las medidas son px del lienzo: lo que en los
+   comentarios aún dice «vh» equivale a 10,8 px (1080/100). Nada depende ya del tamaño de la ventana.
+   `inset:0` → top/right/bottom/left (el motor web de Tizen 2017 no tiene `inset`).
+   MODO TV por defecto: lo de prueba lleva .dbg y sólo se ve con ?dev=1 (body.dev).
+
+   v11 (2026-10-23) · CHROMIUM M47 (motor web del TV 2017), comprobado con tools/m47_check.mjs:
+   · cada var() lleva antes su valor LITERAL (M47 no tiene custom properties: sin respaldo, el HUD salía negro, 1,18:1);
+   · ninguna parada de degradado con DOS posiciones («#FEC631 0 20%», Chrome 71): se escriben dos paradas, que es lo
+     mismo por definición (las 5 franjas de arriba, el filete del rótulo y las líneas de barrido desaparecían en M47);
+   · el glitch del rótulo lleva -webkit-clip-path (M47 no tiene clip-path sin prefijo: duplicaba el nombre entero);
+   · Rubik en caras ESTÁTICAS por peso (M47 no tiene fuentes variables: todo salía en Light con negrita sintética);
+   · las reglas body[data-bg="art"] se fundieron con su base (el fondo es SIEMPRE el arte): mismos estilos calculados. */
+
+@font-face{font-family:"Gugi";src:url("../fonts/Gugi-latin.woff2") format("woff2");font-weight:400;font-display:block}
+/* v11 · Rubik: una cara ESTÁTICA por peso (instancias de Rubik-latin-var.woff2 con fontTools: README v11). M47 no lee el
+   rango «300 900» de una fuente variable; con caras estáticas cada peso es el suyo en cualquier motor. */
+@font-face{font-family:"Rubik";src:url("../fonts/Rubik-latin-300.woff2") format("woff2");font-weight:300;font-display:block}
+@font-face{font-family:"Rubik";src:url("../fonts/Rubik-latin-400.woff2") format("woff2");font-weight:400;font-display:block}
+@font-face{font-family:"Rubik";src:url("../fonts/Rubik-latin-500.woff2") format("woff2");font-weight:500;font-display:block}
+@font-face{font-family:"Rubik";src:url("../fonts/Rubik-latin-700.woff2") format("woff2");font-weight:700;font-display:block}
+@font-face{font-family:"Rubik";src:url("../fonts/Rubik-latin-800.woff2") format("woff2");font-weight:800;font-display:block}
+@font-face{font-family:"Rubik";src:url("../fonts/Rubik-latin-900.woff2") format("woff2");font-weight:900;font-display:block}
+/* v10 · la letra del portfolio, sólo en el reverso de autoría (OFL-1.1, acreditada en ../fonts/OFL.txt) */
+@font-face{font-family:"Funnel Display";src:url("../fonts/FunnelDisplay-Light.ttf") format("truetype");font-weight:300;font-display:block}
+/* v13 · la letra de la autoría en pixel art: Pixel Operator (Jayvee Enaguas, CC0 1.0; fonts/PixelOperator_CC0.txt), la de WD.
+   Sólo se usa a su tamaño nativo (16 px) para rasterizar las máscaras de 1 bit dentro del canvas (p8e.js, auText) */
+@font-face{font-family:"Pixel Operator";src:url("../fonts/PixelOperator.ttf") format("truetype");font-weight:400;font-display:block}
+
+:root{
+  --y:#FEC631; --o:#F9591F; --r:#F21E2C; --b:#B21D3B; --p:#6A1D41; --cr:#FFFEE8;
+  --k:#26121B; --ink:#1D1A17;
+  --stripes:linear-gradient(90deg,var(--y) 0,var(--y) 20%,var(--o) 20%,var(--o) 40%,var(--r) 40%,var(--r) 60%,var(--b) 60%,var(--b) 80%,var(--p) 80%,var(--p) 100%);
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#000;cursor:none}
+body{font-family:"Rubik",Arial,sans-serif;-webkit-font-smoothing:antialiased;background:#000;color:#FFFEE8;color:var(--cr)}
+/* v3 · el lienzo del TV (1920×1080). Lo de fuera es letterbox negro. El escalado (transform) lo pone
+   fitStage(); es 2D y está POR ENCIMA de .viewport (la cámara): no toca la cadena preserve-3d. */
+#tv{position:absolute;left:0;top:0;width:1920px;height:1080px;overflow:hidden;background:#1A0F14;cursor:none;
+  -webkit-transform-origin:0 0;transform-origin:0 0}
+body.dev,body.dev #tv{cursor:auto}
+body:not(.dev) .dbg{display:none!important}
+.sr{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+
+/* ===== FRANJAS SOBRE EL ARTE (P8e) =======================================================
+   Las franjas de P8d/90s.html, sin el crema: 5 franjas OPACAS a cada lado del cassette
+   (izq. 0 → 50%−26vh · der. 50%+26vh → 100%). v6: son SÓLO el panel de información de reposo (sin
+   lettering ni píldora propios). Bajo las franjas de la derecha va el RÓTULO de la app (v2: sustituye a la línea
+   de la versión anterior). El hueco central ya no es crema: es la obra. Las franjas son bloques sólidos de la paleta (sin alfa) + una sombra corta para que se
+   lean como objeto sobre cualquier cuadro.
+
+   REPOSO (idle): cada franja es una hoja que se mueve SOLA (transform, compositor):
+   · .out     → las franjas se barren hacia su borde (izq. ←, der. →), de arriba abajo
+   · .info    → (v6: fija) el texto del panel; mientras están fuera se cambia; al quitar .out vuelven
+   · .gone    → ya fuera: visibility:hidden, no pinta nada. Estado inicial: .out.info.gone
+                (sin conexión, sin info o sin reposo no hay franjas). Salir = .out (+ .gone al acabar)
+   MOTION (perillas en p8e.js: OUT_MS / IN_MS / OUT_STG / IN_STG; deben cuadrar con lo de aquí)
+   · salida  360 ms cubic-bezier(.55,0,.8,.2) (acelera hacia fuera), escalón 50 ms → 560 ms
+   · entrada 620 ms cubic-bezier(.16,1,.3,1)  (frena al llegar),      escalón 70 ms → 900 ms
+   SIN var() en estas reglas: el motor web de Tizen 2017 es anterior a las custom properties. */
+.bands{position:fixed;top:0;right:0;bottom:0;left:0;z-index:0;pointer-events:none}
+.bands .side{position:absolute;top:507.6px;height:302.4px}
+.bands .L{left:0;width:calc(50% - 280.8px)}
+.bands .R{left:calc(50% + 280.8px);right:0}
+/* v10: la franja (.st) ya no pinta: es el carril que entra y sale (translateX) y la cámara de su giro (perspective).
+   Lo que se ve son sus dos caras: .fr (el panel de info, el color de la franja) y .bk (el reverso: la autoría).
+   El overflow:hidden pasó de .st a cada cara: en .st recortaría el giro. */
+.bands .st{position:relative;height:60.48px;
+  -webkit-transform:translateX(0);transform:translateX(0);
+  -webkit-perspective:520px;perspective:520px;
+  -webkit-transition:-webkit-transform 620ms cubic-bezier(.16,1,.3,1);transition:transform 620ms cubic-bezier(.16,1,.3,1)}
+.bands .fr,.bands .bk{position:absolute;top:0;left:0;right:0;bottom:0;overflow:hidden;
+  box-shadow:0 5.4px 12.96px rgba(20,8,14,.30);-webkit-transform-origin:50% 50%;transform-origin:50% 50%}
+.bands .s1 .fr{background:#FEC631;color:#1D1A17}
+.bands .s2 .fr{background:#F9591F;color:#1D1A17}
+.bands .s3 .fr{background:#F21E2C;color:#FFFEE8}
+.bands .s4 .fr{background:#B21D3B;color:#FFFEE8}
+.bands .s5 .fr{background:#6A1D41;color:#FFFEE8}
+.bands .s2{-webkit-transition-delay:70ms;transition-delay:70ms}
+.bands .s3{-webkit-transition-delay:140ms;transition-delay:140ms}
+.bands .s4{-webkit-transition-delay:210ms;transition-delay:210ms}
+.bands .s5{-webkit-transition-delay:280ms;transition-delay:280ms}
+.bands.out .st{-webkit-transition:-webkit-transform 360ms cubic-bezier(.55,0,.8,.2);transition:transform 360ms cubic-bezier(.55,0,.8,.2)}
+.bands.out .s2{-webkit-transition-delay:50ms;transition-delay:50ms}
+.bands.out .s3{-webkit-transition-delay:100ms;transition-delay:100ms}
+.bands.out .s4{-webkit-transition-delay:150ms;transition-delay:150ms}
+.bands.out .s5{-webkit-transition-delay:200ms;transition-delay:200ms}
+.bands.out .L .st{-webkit-transform:translateX(-104%);transform:translateX(-104%)}
+.bands.out .R .st{-webkit-transform:translateX(104%);transform:translateX(104%)}
+
+/* píldoras del panel (.ti) */
+.bands .tag{position:absolute;top:436.32px;white-space:nowrap}
+.bands .tagL{left:162px;width:414.72px;text-align:right}
+.bands .tagR{left:calc(50% + 382.32px);text-align:left}
+.bands .tag span,.bands .abs span{position:absolute;top:0;display:inline-block;background:#6A1D41;color:#FFFEE8;
+  font-weight:700;font-size:33.48px;letter-spacing:.02em;line-height:1;padding:9.72px 14.04px;text-transform:uppercase;
+  box-shadow:0 4.32px 10.8px rgba(20,8,14,.30)}
+.bands .tagL span{right:0}
+.bands .tagR span{left:0}
+/* atribución CC BY (+ marca «act. hace N min» si el dato es el último de la caché): bajo el rótulo,
+   alineada a la derecha. El rótulo ocupa 76.6 → 82.7vh; esto, 84.2 → 88.2vh; la ayuda empieza en ≈94.6vh. */
+.bands .abs{position:absolute;top:909.36px;right:28.08px;left:calc(50% + 302.4px);white-space:nowrap}
+.bands .abs span{right:0;font-weight:700;font-size:24.84px;letter-spacing:.06em;padding:9.18px 12.96px}
+.bands.gone{visibility:hidden}
+.bands .ti{opacity:0;-webkit-transition:opacity 120ms linear;transition:opacity 120ms linear}
+.bands.info .ti{opacity:1;-webkit-transition:opacity 220ms linear 520ms;transition:opacity 220ms linear 520ms}
+.bands.info.out .ti{opacity:0;-webkit-transition:opacity 120ms linear;transition:opacity 120ms linear}
+
+/* contenido de datos (sólo con .info). Texto ≥ 2.3vh = 24,8 px a 1080p; valores 3.2vh = 34,6 px.
+   Tintas medidas (tools/wcag.py): #1D1A17 sobre amarilla 11.00 · sobre naranja 5.34 ·
+   crema sobre roja 4.12 (SÓLO texto grande: todo lo de la roja es ≥24,8 px/800) ·
+   crema sobre burdeos 6.58 · crema sobre ciruela 11.04 · amarillo sobre ciruela 7.15. */
+.bands .c{display:none;width:100%;height:100%;-webkit-box-align:center;align-items:center;white-space:nowrap;padding:0 32.4px 0 54px}
+.bands .R .c{padding:0 54px 0 32.4px}
+.bands.info .c{display:-webkit-box;display:flex}
+.bands .c>*{margin-right:12.96px;-webkit-flex:none;flex:none}
+.bands .c>*:last-child{margin-right:0}
+.bands .c .sp{-webkit-box-flex:1;-webkit-flex:1 1 auto;flex:1 1 auto;margin:0}
+.bands .lb{font-weight:800;font-size:24.84px;letter-spacing:.07em;line-height:1;text-transform:uppercase}
+.bands .v{font-family:"Gugi";font-size:34.56px;line-height:1}
+.bands .vb{font-family:"Gugi";font-size:41.04px;line-height:1}
+.bands .s5 .v,.bands .s5 .vb{color:#FEC631}
+.bands .city{overflow:hidden;text-overflow:ellipsis;min-width:0;-webkit-flex:0 1 auto;flex:0 1 auto;max-width:302.4px}   /* v16.10: L2 lleva ciudad + temperatura + estado */
+.bands .ic{width:45.36px;height:45.36px;display:block}
+.bands .ics{width:32.4px;height:32.4px;display:block}
+.bands .day{width:162px}                                           /* v12: 129.6 → 162 px, «TOMORROW» mide 161 (era «MAÑANA», 130) */
+.bands .tmp{width:167.4px}
+.bands .bars{display:-webkit-box;display:flex;-webkit-box-align:end;align-items:flex-end;height:45.36px}
+.bands .bars i{display:block;width:16.2px;margin-right:5.94px;background:currentColor;min-height:4.32px}
+.bands .bars i:last-child{margin-right:0}
+/* v16.9 · PICO Y PLACA (franja derecha 4, p8e.js «PICO Y PLACA BOGOTÁ»). Dos etiquetas apiladas en la altura
+   de la franja: 2 × 24,84 px (el mínimo de las franjas, 2,3vh) = 49,7 de 60,48 px. Crema sobre burdeos (#B21D3B): 6.58 (tools/wcag.py,
+   el par que ya usaba «Daylight»). Medido (Chrome, 1920×1080): el caso más ancho, «[PICO Y PLACA / 6:00–21:00] · NO CIRCULAN 1-2-3-4-5»,
+   ocupa 556 de los 592,6 px útiles de la franja. */
+.bands .pyp2{display:block;line-height:1}
+.bands .pyp2 .lb{display:block}
+.bands .pyp2 .lb+.lb{margin-top:1.08px}
+.bands .pyp2.r{text-align:right}
+/* v16.10 · el rediseño del panel: título del clima en L1, «Horario pico y placa» en letra normal (R3) y TRM (R4/R5) */
+.bands .wxt{text-transform:uppercase;letter-spacing:.015em}
+.bands .rates .lb{letter-spacing:.05em}
+.bands .rates .v{font-size:32.4px}
+
+/* ===== v10 · AUTORÍA: el reverso de las franjas (decisión de diseño, 2026-10-23) =================
+   De vez en cuando, y no muy seguido, las franjas de información giran y dejan ver a la izquierda el QR al portfolio
+   del autor y a la derecha su firma con sello, como en Warp Drive.
+   · GIRO = tablero split-flap: cada franja gira sobre su eje horizontal (rotateX), de arriba abajo, con 70 ms de
+     escalón. Media vuelta en dos tiempos de 240 ms: la cara que se va acelera hasta ponerse de canto (90°, no
+     pinta nada) y la que llega sale de canto y frena con un rebote corto (2,7° medido), como la paleta de un tablero.
+     La cara que no se ve tiene además opacidad 0 y cambia en el instante en que las dos están de canto.
+     Total: 4·70 + 2·240 = 760 ms (= AU_FLIP_MS de p8e.js). Sólo transform y opacity (compositor).
+   · .arm   → el reverso existe (display); sin .arm no hay ni capas ni texturas del reverso.
+   · .au    → la autoría está arriba. Quitarla deshace el giro, también de arriba abajo, en sentido contrario.
+   · .nf    → «sin giro»: vuelta a la info por corte, con las franjas ya fuera (nadie lo ve).
+   · v13: el REVERSO es el fondo del estudio de Warp Drive (#001219): el giro es el umbral
+     de WD. Lo que la v10 pintaba aquí en HTML (tablero .bd con texto, QR y sello) es ahora pixel art en dos canvas
+     (.au-px, más abajo; p8e.js «v13 · AUTORÍA EN PIXEL ART»). Literales, sin var(), sin inset ni gap (M47). */
+.bands .fr{opacity:1;-webkit-transform:rotateX(0deg);transform:rotateX(0deg)}
+.bands .bk{display:none;opacity:0;-webkit-transform:rotateX(-90deg);transform:rotateX(-90deg);background:#001219;color:#E9D8A6}   /* v13: el fondo del estudio de WD */
+.bands.arm .bk{display:block}
+/* v16.11 F5 (?bandsflat=0 lo quita): con las franjas QUIETAS (.bst: entrada acabada, hasta que empieza la salida) la cara .fr va
+   sin transformación 3D (rotateX(0deg) creaba una capa por franja sin nada que girar). Durante la entrada y la salida conserva
+   rotateX(0deg): medido, una capa propia rasteriza el deslizamiento distinto (bordes subpíxel), así que no se toca. Con .arm (justo
+   antes del giro de la autoría) o .au, también rotateX: el giro se ve igual */
+.bandsflat .bands.bst:not(.arm):not(.au) .fr{-webkit-transform:none;transform:none}
+.bands.bsx .fr{-webkit-transition:none!important;transition:none!important}   /* un fotograma al quitar .bst: sin transición del cambio */
+.bands.au .fr{opacity:0;-webkit-transform:rotateX(90deg);transform:rotateX(90deg)}
+.bands.au .bk{opacity:1;-webkit-transform:rotateX(0deg);transform:rotateX(0deg)}
+/* tiempos: [transform de la cara que se va | de la que llega] y el cambio de opacidad en el canto.
+   Ida (.au): sale .fr (240 ms, acelera), llega .bk (240 ms, frena con rebote). Vuelta: al revés. */
+.bands.au .fr,.bands .bk{-webkit-transition:-webkit-transform 240ms cubic-bezier(.55,0,.8,.2),opacity 1ms linear 240ms;
+  transition:transform 240ms cubic-bezier(.55,0,.8,.2),opacity 1ms linear 240ms}
+.bands.au .bk,.bands .fr{-webkit-transition:-webkit-transform 240ms cubic-bezier(.2,1.3,.45,1) 240ms,opacity 1ms linear 240ms;
+  transition:transform 240ms cubic-bezier(.2,1.3,.45,1) 240ms,opacity 1ms linear 240ms}
+.bands.au .s2 .fr,.bands .s2 .bk{-webkit-transition-delay:70ms,310ms;transition-delay:70ms,310ms}
+.bands.au .s3 .fr,.bands .s3 .bk{-webkit-transition-delay:140ms,380ms;transition-delay:140ms,380ms}
+.bands.au .s4 .fr,.bands .s4 .bk{-webkit-transition-delay:210ms,450ms;transition-delay:210ms,450ms}
+.bands.au .s5 .fr,.bands .s5 .bk{-webkit-transition-delay:280ms,520ms;transition-delay:280ms,520ms}
+.bands.au .s2 .bk,.bands .s2 .fr{-webkit-transition-delay:310ms,310ms;transition-delay:310ms,310ms}
+.bands.au .s3 .bk,.bands .s3 .fr{-webkit-transition-delay:380ms,380ms;transition-delay:380ms,380ms}
+.bands.au .s4 .bk,.bands .s4 .fr{-webkit-transition-delay:450ms,450ms;transition-delay:450ms,450ms}
+.bands.au .s5 .bk,.bands .s5 .fr{-webkit-transition-delay:520ms,520ms;transition-delay:520ms,520ms}
+.bands.nf .fr,.bands.nf .bk{-webkit-transition:none!important;transition:none!important}
+/* con la autoría arriba, las píldoras del tiempo y la atribución de Open-Meteo se van (no hay dato del tiempo en
+   pantalla); vuelven con la info (la regla .info .ti de siempre: 220 ms tras 520 ms) */
+.bands.info.au .ti{opacity:0;-webkit-transition:opacity 160ms linear;transition:opacity 160ms linear}
+
+/* las franjas caen en fracciones de píxel (y = 507,6 + 60,48·i): cada reverso empieza en un píxel ENTERO (v10) y, salvo el
+   último, baja 1 px que tapa la cara de la franja siguiente: entre dos reversos no asoma ninguna línea de la obra */
+.bands .s1 .bk{top:-.6px}
+.bands .s2 .bk{top:-.08px}
+.bands .s3 .bk{top:-.56px}
+.bands .s4 .bk{top:-.04px}
+.bands .s5 .bk{top:-.52px}
+.bands .R .bk{left:-.8px}
+.bands .s1 .bk,.bands .s2 .bk,.bands .s3 .bk,.bands .s4 .bk{bottom:-1px}
+/* y la sombra del reverso, sin subir: la de las franjas (0 5,4 12,96) sube 7,6 px sobre la de encima y dibujaría una
+   raya en cada junta del tablero. Ésta (desfase 6,48, desenfoque 8,64, contracción 2,16) sube 0 px */
+.bands .bk{box-shadow:0 6.48px 8.64px -2.16px rgba(20,8,14,.30)}
+/* ===== v13 · AUTORÍA EN PIXEL ART =================================================
+   Dos canvas (.au-px.L / .au-px.R), hermanos de las franjas dentro de .bands (fuera de la cadena 3D del corredor), a
+   227×110 píxeles lógicos y 681×330 px CSS: ×3 ENTERO, en píxel entero (x 0 / 1239, y 494; los pone p8e.js). Vecino más
+   próximo: image-rendering:pixelated (Chrome 41+, M47 incluido). Respaldo .up: búfer a ×3, escalado dentro del canvas
+   sin suavizar (p8e.js) y aquí, por si acaso, también pixelated. Sólo se ven con .px (mientras hay autoría); sin filtros,
+   ni sombras, ni transiciones: lo que se mueve es el contenido del canvas, no la capa. Literales, sin var() (M47). */
+.bands .au-px{position:absolute;display:none;pointer-events:none;image-rendering:pixelated}
+.bands.px .au-px{display:block}
+.bands.out .au-px{display:none}
+/* ===== FONDO ARTE (WebGL vivo, SIN velo crema) =========================================
+   El still nítido (Ken Burns) y el canvas WebGL (sólo durante la transición). Sin scrim: la
+   legibilidad la dan las PÍLDORAS de cada texto, no lavar la obra. En data-bg="90s" la capa sólo
+   existe en el MODO ARTE (entrada 15). Un solo contexto WebGL en ambas versiones. */
+.artwrap{position:fixed;top:0;right:0;bottom:0;left:0;z-index:0;overflow:hidden;pointer-events:none;background:#1A0F14}
+.art-still{position:absolute;top:0;right:0;bottom:0;left:0;background-position:center;background-size:cover;background-repeat:no-repeat;
+  opacity:0;transition:opacity .18s linear;transform-origin:0 0;will-change:transform;backface-visibility:hidden}
+.art-canvas{position:absolute;top:0;right:0;bottom:0;left:0;width:100%;height:100%;display:block;opacity:0;transition:opacity .16s linear}
+/* ===== v16 · RENDIMIENTO. Mismo aspecto, otra técnica; cada regla cuelga de una clase de <html> que
+   pone p8e.js según su palanca (?artopaque ?cass3d ?card3d ?ovl; ?v16=0 las apaga todas). README, v16.
+   · El still muestra el <img> ÚNICO de la obra (p8e.js, artImgEl): object-fit:cover centrado = el background-size:cover centrado
+     de antes (Chrome 32+; M47 lo tiene). Con ?artone=0 vuelve el background-image. */
+.art-still .art-img{position:absolute;left:0;top:0;width:100%;height:100%;display:block;object-fit:cover;object-position:50% 50%;
+  border:0;margin:0;padding:0;max-width:none}
+/* · El still es una capa OPACA: el fondo (#1A0F14, el mismo de #tv y .artwrap) queda debajo de la obra, que lo cubre entero
+     (cover; el paneo y el Ken Burns nunca enseñan borde). Una capa opaca deja al compositor de M47 descartar lo que tapa
+     (el fondo de #tv y de .artwrap: un relleno de 1920×1080 menos por fotograma) y pintar la obra sin mezcla. */
+.artopq .art-still{background-color:#1A0F14}
+/* · VIÑETA + BARRIDO en UNA capa a pantalla completa (antes, dos): la viñeta pasa a ser el fondo de abajo de .scan. .scan
+     conserva su opacidad .55, así que la viñeta lleva alfa .22/.55 = .40 (mismo resultado: «over» es asociativo). Con
+     movimiento reducido no hay barrido: p8e.js no pone .ovl1 y la viñeta sigue sola, como antes. */
+.ovl1 .vig{display:none}
+.ovl1 .scan{background:repeating-linear-gradient(to bottom,rgba(38,18,27,.05) 0,rgba(38,18,27,.05) 1px,transparent 1px,transparent 3px),
+  radial-gradient(circle at 50% 46%,transparent 58%,rgba(38,18,27,.40) 125%)}
+/* ===== v8 · FICHA DE MUSEO (abajo a la derecha) Y HORA (abajo a la izquierda) ===================
+   Decisión de diseño (2026-10-23): el título de la obra va en una ficha de museo, simple y elegante, con su fecha de
+   creación, abajo a la derecha; la hora va aparte, abajo a la izquierda.
+   · FICHA = cartela de pared, no píldora: crema OPACO #FFFEE8, filete de 1 px, esquinas vivas, sin sombra.
+     Línea 1: artista, Rubik 500 a 28 px (la principal). Línea 2: título en cursiva + «, fecha», Rubik 300 a
+     24 px. Tinta #1D1A17 sobre #FFFEE8 (medido: README v8). Mismo borde derecho que el rótulo y la atribución
+     (28,08 px). Sin colección: a 24 px no cabe una 3.ª línea sobre la atribución de Open-Meteo, y por debajo de
+     24 px no se lee a 10 ft (README v8).
+   · HORA sola, Rubik 300 a 36 px con cifras tabulares, con el respaldo crema difuso de la v4 (.40, medido).
+     Su línea base = la de la 2.ª línea de la ficha (bottom 37 px, medido: y = 1037 las dos): un mismo pie.
+   · Cambio de obra (p8e.js setFicha): la cara se funde fuera 240 ms, se reescribe y vuelve en 320 ms (lineal).
+   Literales, sin var(), sin inset ni gap: motor web de Tizen 2017 (Chromium M47). */
+.ficha{position:fixed;right:28.08px;bottom:26px;z-index:19;pointer-events:none}
+.ficha .fc{display:block;background:#FFFEE8;border:1px solid #3A352E;border-radius:0;padding:10px 20px 10px 19px;
+  color:#1D1A17;white-space:nowrap;text-align:left;opacity:1;
+  -webkit-transition:opacity 320ms linear;transition:opacity 320ms linear}
+.ficha .fc.fx{opacity:0;-webkit-transition:opacity 240ms linear;transition:opacity 240ms linear}
+.ficha .fa{display:block;font-weight:500;font-size:28px;line-height:30px;letter-spacing:.005em}
+.ficha .ft{display:block;margin-top:2px;font-weight:300;font-size:24px;line-height:28px;letter-spacing:.01em}
+.ficha .ft i{font-style:italic}
+.foot{position:fixed;left:28.08px;bottom:37px;z-index:19;pointer-events:none;white-space:nowrap;color:#1D1A17}
+.foot::before{content:"";position:absolute;left:-2px;right:-2px;top:6px;bottom:2px;z-index:-1;border-radius:24px;
+  background:rgba(255,254,232,.40);box-shadow:0 0 20px 12px rgba(255,254,232,.40)}   /* .40: medido (README v4) */
+.foot .clk{display:block;font-weight:300;font-size:36px;line-height:1;letter-spacing:.01em;
+  -webkit-font-feature-settings:"tnum";font-feature-settings:"tnum";font-variant-numeric:tabular-nums;
+  text-shadow:0 0 1px rgba(255,254,232,.95),0 0 3px rgba(255,254,232,.85)}
+body.dev .ficha{bottom:60px} body.dev .foot{bottom:71px}   /* dev: encima de la barra de ayuda (misma línea base) */
+/* ===== v16.3 · HORA | FICHA en el pie, abajo a la izquierda (decisión de diseño, 2026-10-25) =================
+   El nombre de la obra tapaba la atribución «Data: Open-Meteo.com», así que la ficha se reduce y va junto a la hora,
+   separada por una barra vertical, todo abajo a la izquierda. Sustituye la colocación de la v8 (ficha a la derecha). La ficha va DENTRO de
+   .foot (p8e.js), en UNA línea: artista · título, fecha. Se reduce en alto (una línea en vez de dos) y el artista baja de
+   28 a 24 px; nada baja de 24 px (suelo de lectura a 10 ft, README v8). Los textos se alinean por la línea base.
+   Al estar dentro de .foot, la ficha no lleva su propio desplazamiento/fundido de lanzamiento (ya los hace .foot). */
+/* v16.3b (2026-10-25): el reloj va en el mismo recuadro blanco del título, separado por la línea: la cartela (crema opaco, filete de 1 px, esquinas vivas) pasa a ser el PIE entero; la hora va dentro, sin halo. La
+   cara de la ficha (.fc) ya no lleva fondo ni filete propios: sólo su texto se funde al cambiar de obra; la hora no. */
+.foot{background:#FFFEE8;border:1px solid #3A352E;border-radius:0;padding:4px 14px 6px 13px}
+.foot::before{display:none}
+.foot .clk{display:inline-block;vertical-align:baseline;text-shadow:none}
+.foot .fsep{display:inline-block;vertical-align:baseline;margin:0 14px 0 16px;font-weight:300;font-size:36px;line-height:1;color:#3A352E}
+.foot .ficha{position:static;display:inline-block;vertical-align:baseline;
+  -webkit-transform:none!important;transform:none!important;opacity:1!important;-webkit-transition:none!important;transition:none!important}
+.foot .ficha .fc{display:inline-block;padding:0;background:transparent;border:0}
+.foot .ficha .fa{display:inline;font-size:24px;line-height:28px}
+.foot .ficha .fa::after{content:"\00a0\00b7\00a0";font-weight:300}
+.foot .ficha .ft{display:inline;margin-top:0}
+
+.vig{position:fixed;top:0;right:0;bottom:0;left:0;z-index:12;pointer-events:none;
+  background:radial-gradient(circle at 50% 46%,transparent 58%,rgba(38,18,27,.22) 125%)}
+.scan{position:fixed;top:0;right:0;bottom:0;left:0;z-index:13;pointer-events:none;opacity:.55;
+  background:repeating-linear-gradient(to bottom,rgba(38,18,27,.05) 0,rgba(38,18,27,.05) 1px,transparent 1px,transparent 3px)}
+/* barra superior: las 5 franjas de la paleta, en vertical (barras) */
+.band5{position:fixed;left:0;right:0;top:0;height:14.04px;z-index:14;pointer-events:none;
+  background:linear-gradient(90deg,#FEC631 0,#FEC631 20%,#F9591F 20%,#F9591F 40%,#F21E2C 40%,#F21E2C 60%,#B21D3B 60%,#B21D3B 80%,#6A1D41 80%,#6A1D41 100%);background:var(--stripes)}
+
+/* ===== EL CORREDOR 3D (mecánica de P8c, intacta) ===================================== */
+.viewport{position:fixed;top:0;right:0;bottom:0;left:0;z-index:1;overflow:hidden;perspective:900px;perspective-origin:50% 43%}
+.world{position:absolute;top:47%;left:50%;transform-style:preserve-3d}
+.item{position:absolute;left:0;top:0;transform-style:preserve-3d;backface-visibility:hidden;
+  border:0;padding:0;margin:0;background:transparent;outline:none}
+.star{position:absolute;left:0;top:0;width:6px;height:6px}
+
+/* la card ES el cassette: 37,4vh × 68vh (0,55 · 68 % del alto). Sin sobre, sin fondo. */
+.card{position:absolute;left:0;top:0;width:403.92px;height:734.4px;transform:translate(-50%,-50%)}
+.card .drop{position:absolute;left:4%;right:4%;bottom:-34.56px;height:58.32px;pointer-events:none;
+  background:radial-gradient(ellipse at center,rgba(0,0,0,.55),rgba(0,0,0,0) 70%)}
+/* LITE: el cassette entero aplanado en UN canvas cacheado por app (las cards NO enfocadas).
+   102 % porque las capas delanteras (+1,8 / +2,4vh) proyectan ~1 % más grande en perspectiva. */
+.card canvas.lite{position:absolute;left:-1%;top:-1%;width:102%;height:102%;display:block}
+.item.rich canvas.lite{visibility:hidden}
+
+/* ---- PILA 3D DEL CASSETTE V3 (rica; sólo una, la enfocada) — copiada del cassette-lab ---- */
+.stage{position:absolute;left:0;top:0;width:403.92px;height:734.4px;perspective:1620px}
+.cass{position:relative;width:100%;height:100%;transform-style:preserve-3d;
+  transform:rotateX(0deg) rotateY(0deg);transition:transform .6s cubic-bezier(.22,1,.36,1)}
+.cass>*{position:absolute;display:block;transition:transform .6s cubic-bezier(.22,1,.36,1)}
+.cass .full{left:0;top:0;width:403.92px;height:734.4px}
+.cass.t-leve{transform:rotateX(5deg) rotateY(-16deg)}
+.stage.st-hold{visibility:hidden}   /* v16.11 F3: el fotograma 1 del asentado (paintApp y mudanza) no se ve: se ve el lite */
+/* L0 cuerpo trasero −46u · L1 carretes −24u · L2 anillos −12u · L3 tapa +18u · L4 sticker +24u */
+.L0{transform:translateZ(-49.68px)}
+.L1{transform:translateZ(-25.92px)}
+.L2{transform:translateZ(-12.96px)}
+.L3{transform:translateZ(19.44px)}
+.L4{left:116.64px;top:192.24px;width:198.72px;height:349.92px;transform:translateZ(25.92px)}
+.L1 canvas,.L2 canvas,.L4 canvas{position:absolute;display:block}
+/* v16 · MENOS SUPERFICIES. En el compositor de M47 (cc, SubtreeShouldRenderToSeparateSurface) una
+   capa PLANA con hijos que pintan, dentro de un contexto preserve-3d, se dibuja aparte en su propia superficie y luego se
+   compone: L1 (chasis + carretes), L2 (anillos) y L4 (montura + logo) eran 3 superficies más por fotograma, además de la de
+   la card. Los hijos de L1 y L2 son coplanarios y sin transform 3D propio, así que dejar que entren en el contexto de .cass
+   da el mismo dibujo sin esas 2 superficies (sus bordes son transparentes: el canto del canvas no se ve). L4 se queda PLANA:
+   la montura pinta hasta su borde y, dibujada suelta en el contexto 3D, su canto superior salía en escalera (medido en
+   Chrome; con superficie el canto lleva antialias). Durante el despiece (.lx-run) las capas se desvanecen con opacity: ahí
+   L1 y L2 vuelven a ser planas para que la opacidad sea de grupo, como siempre (M47 la aplica a cada hijo si es preserve-3d). */
+.cass3d .cass .L1,.cass3d .cass .L2{-webkit-transform-style:preserve-3d;transform-style:preserve-3d}
+.cass3d .cass.lx-run .L1,.cass3d .cass.lx-run .L2{-webkit-transform-style:flat;transform-style:flat}
+/* · Lo mismo con cada .card del corredor (plana dentro de .item preserve-3d): sólo cuando su .item está a opacidad 1 (clase
+     .o1, la pone project()); a opacidad < 1 la card sigue plana para que la opacidad sea de grupo. En el despiece y la vuelta
+     (body.launch) los ítems se desvanecen: planas. */
+.card3d .item.o1 .card{-webkit-transform-style:preserve-3d;transform-style:preserve-3d}
+.card3d body.launch .item.o1 .card{-webkit-transform-style:flat;transform-style:flat}
+.wall{transition:opacity .3s linear,transform .6s cubic-bezier(.22,1,.36,1)}
+.wall.wl{left:-34.56px;top:0;width:69.12px;height:734.4px;transform:translateZ(-15.12px) rotateY(90deg)}
+.wall.wr{left:369.36px;top:0;width:69.12px;height:734.4px;transform:translateZ(-15.12px) rotateY(90deg)}
+.wall.wt{left:0;top:-34.56px;width:403.92px;height:69.12px;transform:translateZ(-15.12px) rotateX(90deg)}
+.wall.wb{left:0;top:699.84px;width:403.92px;height:69.12px;transform:translateZ(-15.12px) rotateX(90deg)}
+
+/* PIXEL-DISSOLVE (mecánica P7/P8c): tablero estático en rejilla entera; sólo anima opacity. */
+.pix{position:absolute;top:0;right:0;bottom:0;left:0;z-index:6;pointer-events:none;opacity:0;visibility:hidden;
+  background-repeat:repeat;background-position:0 0;background-size:24px 24px;
+  background-image:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='24'%20height='24'%3E%3Crect%20width='12'%20height='12'%20fill='%2326121B'/%3E%3Crect%20x='12'%20y='12'%20width='12'%20height='12'%20fill='%2326121B'/%3E%3C/svg%3E");
+  image-rendering:pixelated}
+
+/* ===== RÓTULO DEL FOCO (2D, FUERA de la cadena 3D) ======================================
+   El nombre a 10 ft: el anillo (≈20 px) y la etiqueta (≈28 px) son sabor; ESTO es la lectura.
+   Píldora ciruela OPACA con texto crema (11.04) + nº amarillo sobre ciruela (7.15) + filete de las
+   5 franjas = highlight de foco de la paleta. El glitch canónico vive aquí, en 2D.
+   v2 (2026-10-23): ya no va bajo el cassette; ocupa el sitio de la antigua línea «Side A»: bajo
+   las franjas de la derecha, alineado a la derecha (mismo margen que la barra de sugerencias).
+   v16.9 (decisión del autor, 2026-10-26): VUELVE BAJO EL CASSETTE, centrado en el eje (x 960) y
+   más pequeño (×0,8; «Enter ▶ Open» ×0,84). Medido en reposo (arnés, suite v169): cassette 3D hasta y 892, su sombra (.drop)
+   hasta y 909 → el rótulo empieza en y 922 y acaba en ≈ 975; el pie (hora | ficha) empieza en y 995 y las franjas acaban en
+   y 810: no se tocan. Centrado con translateX(−50%) (el lanzamiento lo saca hacia abajo, como el pie). */
+.cap{position:fixed;left:50%;top:922px;z-index:20;pointer-events:none;
+  -webkit-transform:translateX(-50%);transform:translateX(-50%);
+  display:flex;align-items:center;white-space:nowrap;
+  background:#6A1D41;color:#FFFEE8;background:var(--p);color:var(--cr);padding:7.78px 15.55px 12.96px;border-radius:7.78px;
+  box-shadow:0 5.18px 13.82px rgba(38,18,27,.28)}
+.cap>*+*{margin-left:13.82px}   /* v3: en vez de gap (M47) */
+.cap::after{content:"";position:absolute;left:0;right:0;bottom:0;height:5.18px;border-radius:0 0 7.78px 7.78px;
+  background:linear-gradient(90deg,#FEC631 0,#FEC631 20%,#F9591F 20%,#F9591F 40%,#F21E2C 40%,#F21E2C 60%,#B21D3B 60%,#B21D3B 80%,#6A1D41 80%,#6A1D41 100%);background:var(--stripes)}
+.cap .no{font-family:"Gugi";font-size:27.65px;line-height:1;color:#FEC631;color:var(--y)}
+.cap .nm{position:relative;font-family:"Gugi";font-size:31.97px;line-height:1;letter-spacing:.03em;text-transform:uppercase}
+.cap .go{font-weight:800;font-size:17.28px;letter-spacing:.06em;text-transform:uppercase;
+  background:#FFFEE8;color:#6A1D41;background:var(--cr);color:var(--p);border-radius:5.18px;padding:3.89px 8.64px}
+/* (v2) cada var() del rótulo lleva antes su valor literal: el motor de Tizen 2017 no tiene custom properties
+   y sin respaldo la píldora se quedaría sin fondo, con texto crema sobre la obra. (v11: el literal del filete tenía
+   paradas de doble posición, que M47 tampoco lee; ahora son dos paradas.) */
+
+/* GLITCH (glitch: separación RGB + scramble) — sólo 2D, sólo el rótulo */
+.nm::before,.nm::after{content:attr(data-text);position:absolute;top:0;right:0;bottom:0;left:0;color:currentColor;
+  background:transparent;overflow:hidden;opacity:0;-webkit-clip-path:inset(0 0 100% 0);clip-path:inset(0 0 100% 0)}
+/* v11 · M47 sólo conoce -webkit-clip-path: sin él, las dos capas del glitch eran el nombre ENTERO duplicado ±3 px.
+   Cada fotograma clave lleva las dos formas (en un motor actual son la misma propiedad). */
+.nm.glitching::before{opacity:1;left:3px;text-shadow:-3px 0 #FF003C;animation:gA1 .36s steps(11,end) 1 both}
+.nm.glitching::after{opacity:1;left:-3px;text-shadow:-3px 0 #00E5FF,3px 2px #FF003C;animation:gA2 .40s steps(11,end) 1 both}
+@keyframes gA1{0%{-webkit-clip-path:inset(20% 0 60% 0);clip-path:inset(20% 0 60% 0);transform:translate(-3px,-1.5px)}20%{-webkit-clip-path:inset(85% 0 5% 0);clip-path:inset(85% 0 5% 0);transform:translate(3px,1.5px)}
+  40%{-webkit-clip-path:inset(65% 0 8% 0);clip-path:inset(65% 0 8% 0);transform:translate(-1.5px,0)}60%{-webkit-clip-path:inset(50% 0 30% 0);clip-path:inset(50% 0 30% 0);transform:translate(4.5px,-1.5px)}
+  80%{-webkit-clip-path:inset(70% 0 15% 0);clip-path:inset(70% 0 15% 0);transform:translate(-3px,1.5px)}100%{-webkit-clip-path:inset(55% 0 25% 0);clip-path:inset(55% 0 25% 0);transform:translate(1.5px,0)}}
+@keyframes gA2{0%{-webkit-clip-path:inset(75% 0 8% 0);clip-path:inset(75% 0 8% 0);transform:translate(3px,1.5px)}24%{-webkit-clip-path:inset(8% 0 82% 0);clip-path:inset(8% 0 82% 0);transform:translate(-3px,-1.5px)}
+  48%{-webkit-clip-path:inset(22% 0 62% 0);clip-path:inset(22% 0 62% 0);transform:translate(1.5px,1.5px)}72%{-webkit-clip-path:inset(45% 0 38% 0);clip-path:inset(45% 0 38% 0);transform:translate(-4.5px,0)}
+  100%{-webkit-clip-path:inset(68% 0 12% 0);clip-path:inset(68% 0 12% 0);transform:translate(3px,-1.5px)}}
+/* v16.11 F4 (?noreflow=0 lo quita): gA1b/gA2b son COPIAS EXACTAS de gA1/gA2; alternar .gb cambia el nombre y reinicia la
+   animación sin el layout forzado (remove + offsetWidth + add) en pleno vuelo */
+.nm.glitching.gb::before{animation-name:gA1b}
+.nm.glitching.gb::after{animation-name:gA2b}
+@keyframes gA1b{0%{-webkit-clip-path:inset(20% 0 60% 0);clip-path:inset(20% 0 60% 0);transform:translate(-3px,-1.5px)}20%{-webkit-clip-path:inset(85% 0 5% 0);clip-path:inset(85% 0 5% 0);transform:translate(3px,1.5px)}
+  40%{-webkit-clip-path:inset(65% 0 8% 0);clip-path:inset(65% 0 8% 0);transform:translate(-1.5px,0)}60%{-webkit-clip-path:inset(50% 0 30% 0);clip-path:inset(50% 0 30% 0);transform:translate(4.5px,-1.5px)}
+  80%{-webkit-clip-path:inset(70% 0 15% 0);clip-path:inset(70% 0 15% 0);transform:translate(-3px,1.5px)}100%{-webkit-clip-path:inset(55% 0 25% 0);clip-path:inset(55% 0 25% 0);transform:translate(1.5px,0)}}
+@keyframes gA2b{0%{-webkit-clip-path:inset(75% 0 8% 0);clip-path:inset(75% 0 8% 0);transform:translate(3px,1.5px)}24%{-webkit-clip-path:inset(8% 0 82% 0);clip-path:inset(8% 0 82% 0);transform:translate(-3px,-1.5px)}
+  48%{-webkit-clip-path:inset(22% 0 62% 0);clip-path:inset(22% 0 62% 0);transform:translate(1.5px,1.5px)}72%{-webkit-clip-path:inset(45% 0 38% 0);clip-path:inset(45% 0 38% 0);transform:translate(-4.5px,0)}
+  100%{-webkit-clip-path:inset(68% 0 12% 0);clip-path:inset(68% 0 12% 0);transform:translate(3px,-1.5px)}}
+.sc{display:inline-block;color:currentColor}
+.sc[data-hidden]{visibility:hidden}
+
+/* ===== HUD SUPERIOR ======================================================================
+   ARREGLO C9b: en P8c la fila «APP 01/15 … VER 8.0c» vivía ABAJO, debajo de la barra de ayuda,
+   y el reloj (margin-left:auto) caía encima del texto de versión. Aquí la versión sube a la
+   fila superior; abajo sólo queda la barra de ayuda, una sola fila flex: nada se superpone. */
+.hud{position:fixed;left:28.08px;right:28.08px;top:30.24px;z-index:20;pointer-events:none;display:flex;
+  align-items:center;font-size:15px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
+  min-height:44px}   /* v4: 44 px = el alto de la v3 (lo daba el reloj): «APP NN/15» queda en el mismo píxel */
+/* v3 · Chromium M47 (TV 2017, Tizen 3.0) no tiene `gap` en flex: márgenes entre hermanos, mismo resultado */
+.hud>*+*{margin-left:17.28px}
+.hud>.app{margin-left:0}
+.hud .ln{flex:1;height:2px;background:transparent}
+.hud b{color:#FEC631;color:var(--y);font-weight:900}
+.hud>span{background:rgba(38,18,27,.90);color:#FFFEE8;color:var(--cr);padding:6.48px 12.96px;border-radius:7.56px}
+/* v4 · ARRIBA DERECHA: nombre de la app · versión · estado de internet (punto + texto). El reloj bajó a la
+   esquina inferior derecha (decisión del autor, que manda sobre la decisión de la v3).
+   El punto lleva FORMA además de color (1.4.1): lleno = en línea · anillo = sin internet · anillo
+   tachado = sin red · anillo tenue = comprobando. El texto dice el estado: el color sólo lo refuerza. */
+.hud .brand em,.hud .brand i{font-style:normal}
+.hud .brand .sep{margin:0 .55em;color:#B8A9AE}
+.hud .net{display:inline-block;position:relative;top:1px;width:13px;height:13px;margin-right:.6em;border-radius:50%;
+  -webkit-box-sizing:border-box;box-sizing:border-box;border:3px solid #FFFEE8;opacity:.55}
+.hud .net.online{background:#5BD46A;border-color:#5BD46A;opacity:1}
+.hud .net.nointernet{border-color:#FEC631;opacity:1}
+.hud .net.nonet{border-color:#FF4D57;opacity:1}
+.hud .net.nonet::after{content:"";position:absolute;left:2px;top:-3px;width:3px;height:13px;background:#FF4D57;
+  -webkit-transform:rotate(45deg);transform:rotate(45deg)}
+/* «APP NN/15» en el eje del cassette (x = 960): sin la versión, entre las dos líneas caía en x ≈ 1057 */
+.hud .app{position:absolute;left:50%;top:50%;-webkit-transform:translate(-50%,-50%);transform:translate(-50%,-50%)}
+
+/* v16.9: aquí vivía el panel SUGERENCIAS (.rail). Fuera por decisión del autor (2026-10-26). */
+
+/* ===== BARRA DE AYUDA (.dbg: sólo con ?dev=1; v3: el reloj ya no vive aquí, va en el HUD) ====== */
+.help{position:fixed;left:0;right:0;bottom:0;z-index:22;display:flex;align-items:center;
+  padding:12px 34px;font-size:19px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;
+  background:rgba(38,18,27,.90);color:#FFFEE8;color:var(--cr);border-top:0}
+/* v3: sin gap (M47) */
+.help>*+*{margin-left:26px}
+.help kbd{display:inline-block;background:#FFFEE8;color:#6A1D41;background:var(--cr);color:var(--p);border-radius:7px;padding:4px 12px;
+  font-family:"Gugi";font-size:15px;margin-right:8px}
+
+/* ===== MODO ARTE pantalla completa (entrada 15) ======================================== */
+body.artmode .viewport,body.artmode .hud,body.artmode .help,body.artmode .cap,
+body.artmode .scan,body.artmode .vig,body.artmode .band5,body.artmode .bands{display:none!important}
+/* v4/v8: en el salvapantallas la ficha y la hora se quedan donde están: nada salta al entrar o salir */
+.artmode-hint{position:fixed;top:28px;left:50%;transform:translateX(-50%);z-index:30;display:none;
+  color:#FFFEE8;color:var(--cr);background:rgba(38,18,27,.92);padding:6px 16px;border-radius:9px;
+  font-size:15px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+body.artmode .artmode-hint{display:block}
+
+/* ===== v7 · ABRIR UNA APP ===================================
+   El despiece del cassette son pistas WAAPI de p8e.js (launchStart). Aquí sólo:
+   · .cass.lx-run: anula las transiciones de .cass y de sus capas mientras dura el despiece (una transición CSS está
+     por encima de una animación en la cascada y lo taparía).
+   · UI fuera en el primer fotograma, rápida y sin competir: 200 ms cubic-bezier(.55,0,.8,.2) (la curva de salida
+     de las franjas), sólo transform + opacity. Vuelta: 420 ms cubic-bezier(.16,1,.3,1) tras 120 ms.
+   · Pantalla de paso (.lx): velo del color del cuerpo trasero del cassette + nº, logo, nombre y «Abriendo…».
+   Literales, sin var(), sin inset ni gap: motor web de Tizen 2017 (Chromium M47). */
+.cass.lx-run,.cass.lx-run>*{-webkit-transition:none!important;transition:none!important}
+.hud,.band5,.cap,.foot,.ficha{
+  -webkit-transition:-webkit-transform 420ms cubic-bezier(.16,1,.3,1) 120ms,opacity 300ms linear 120ms;
+  transition:transform 420ms cubic-bezier(.16,1,.3,1) 120ms,opacity 300ms linear 120ms}
+body.launch .hud,body.launch .band5{-webkit-transform:translateY(-64px);transform:translateY(-64px);opacity:0}
+/* v16.9: el rótulo, centrado bajo el cassette, sale hacia ABAJO (como el pie) y conserva su centrado (−50 %) */
+body.launch .cap{-webkit-transform:translate(-50%,48px);transform:translate(-50%,48px);opacity:0}
+/* v16.9 · intro: mientras el cassette se ARMA (las capas vuelan hacia su sitio y cruzan la zona del rótulo) el rótulo espera
+   fuera, sin transición; al encajar (bootAfterArm) se quita la clase y entra con la transición de vuelta de la UI + el glitch */
+/* v16.10: en el arranque el rótulo espera en su posición de reposo (solo opacidad), NO 48 px abajo: a 970 px rozaba el pie (995). El lanzamiento conserva sus +48 px (body.launch). */
+body.cap-wait .cap{-webkit-transform:translate(-50%,0);transform:translate(-50%,0);opacity:0;-webkit-transition:none;transition:none}
+body.launch .foot,body.launch .ficha{-webkit-transform:translateY(48px);transform:translateY(48px);opacity:0}
+body.launch .hud,body.launch .band5,body.launch .cap,body.launch .foot,body.launch .ficha{
+  -webkit-transition:-webkit-transform 200ms cubic-bezier(.55,0,.8,.2),opacity 200ms linear;
+  transition:transform 200ms cubic-bezier(.55,0,.8,.2),opacity 200ms linear}
+body.launch .bands{opacity:0;-webkit-transition:opacity 160ms linear;transition:opacity 160ms linear}
+/* Arte: la ficha y la hora se quedan, como en el salvapantallas al que se va */
+body.launch-arte .foot,body.launch-arte .ficha{-webkit-transform:none;transform:none;opacity:1}
+/* oscurece SÓLO el arte (va bajo el corredor) */
+.lx-dim{position:fixed;top:0;right:0;bottom:0;left:0;z-index:0;background:#000;opacity:0;pointer-events:none}
+/* v9 · ELECTRICIDAD: canvas 2D propio, HERMANO de .viewport (z 2: sobre el cassette, bajo
+   la viñeta y las líneas de barrido). No es ancestro de la pila 3D y no lleva filter/mask/clip-path/mix-blend-mode:
+   el 3D no se aplana. Sólo existe (display:block) durante el despiece; fuera mide 1×1 px.
+   PORTAL: es el MISMO canvas WebGL del arte (.art-canvas) a 1/PORTAL_RES; el compositor lo escala sin suavizar
+   (image-rendering:pixelated, Chrome 41+), que es el píxel de 8 bits del shader. A 1:1 (dispersal) no cambia nada. */
+.lx-zap{position:fixed;top:0;left:0;width:1920px;height:1080px;z-index:2;pointer-events:none;display:none}
+.art-canvas.portal{image-rendering:pixelated}
+.lx{position:fixed;top:0;right:0;bottom:0;left:0;z-index:45;pointer-events:none;visibility:hidden}
+.lx.on{visibility:visible}
+.lx-veil{position:absolute;top:0;right:0;bottom:0;left:0;background:#000;opacity:1}
+.lx-card{position:absolute;top:0;right:0;bottom:0;left:0;display:-webkit-box;display:-webkit-flex;display:flex;
+  -webkit-box-orient:vertical;-webkit-flex-direction:column;flex-direction:column;
+  -webkit-box-align:center;-webkit-align-items:center;align-items:center;-webkit-box-pack:center;-webkit-justify-content:center;justify-content:center;
+  color:#FFFEE8;text-align:center}
+.lx-card .no{font-family:"Gugi";font-size:40px;line-height:1;color:#FEC631;margin-bottom:26px}
+.lx-card .lg{display:block;margin-bottom:30px}
+.lx-card .nm{font-family:"Gugi";font-size:104px;line-height:1;letter-spacing:.03em;text-transform:uppercase;white-space:nowrap}
+.lx-card .bar{display:block;width:432px;height:10.8px;margin-top:34px;
+  background:linear-gradient(90deg,#FEC631 0,#FEC631 20%,#F9591F 20%,#F9591F 40%,#F21E2C 40%,#F21E2C 60%,#B21D3B 60%,#B21D3B 80%,#6A1D41 80%,#6A1D41 100%)}
+.lx-card .msg{margin-top:34px;font-weight:800;font-size:30px;line-height:1;letter-spacing:.18em;text-transform:uppercase}
+.lx-card .msg i{font-style:normal;opacity:.25}
+.lx.open .msg i{-webkit-animation:lxDot 1200ms linear infinite;animation:lxDot 1200ms linear infinite}
+.lx.open .msg i:nth-child(2){-webkit-animation-delay:200ms;animation-delay:200ms}
+.lx.open .msg i:nth-child(3){-webkit-animation-delay:400ms;animation-delay:400ms}
+@-webkit-keyframes lxDot{0%{opacity:.25}35%{opacity:1}70%{opacity:.25}100%{opacity:.25}}
+@keyframes lxDot{0%{opacity:.25}35%{opacity:1}70%{opacity:.25}100%{opacity:.25}}
+
+/* ===== reduced-motion: nada se mueve (el JS tampoco arranca giros, partículas ni paneo) == */
+@media (prefers-reduced-motion:reduce){
+  .nm.glitching::before,.nm.glitching::after{animation:none!important;opacity:0!important}
+  .scan{display:none}
+  .cass,.cass>*,.wall{transition:none!important}
+  .pix{display:none!important}
+  .art-still{transform:none!important;will-change:auto}
+  .bands .st,.bands .ti{-webkit-transition:none!important;transition:none!important}
+  .bands .fr,.bands .bk{-webkit-transition:none!important;transition:none!important}   /* v10: el giro de autoría, por corte */
+  .hud,.band5,.cap,.foot,.ficha,.ficha .fc,.bands{-webkit-transition:none!important;transition:none!important}
+  .lx-card .msg i{-webkit-animation:none!important;animation:none!important;opacity:1}
+}
+.reduce .cass,.reduce .cass>*,.reduce .wall{transition:none!important}
+.reduce .pix{display:none!important}
+.reduce .scan{display:none}
+
+.reduce .bands .st,.reduce .bands .ti{-webkit-transition:none!important;transition:none!important}
+.reduce .bands .fr,.reduce .bands .bk{-webkit-transition:none!important;transition:none!important}
+/* v7 · reduced-motion: la UI se va y vuelve por corte; los puntos de «Abriendo…» quietos */
+.reduce .hud,.reduce .band5,.reduce .cap,.reduce .foot,.reduce .ficha,.reduce .ficha .fc,.reduce .bands{-webkit-transition:none!important;transition:none!important}
+.reduce .lx-card .msg i{-webkit-animation:none!important;animation:none!important;opacity:1}
+
+/* ===== v16 · SONDAS DE DIAGNÓSTICO. SÓLO con ?dev=1&probe=a,b,… (p8e.js pone body.probe-a …).
+   NO son el producto: quitan cosas a propósito para medir en el TV cuánto cuesta cada capa (panel ?diag=1). Lista y orden de
+   medida en el README, v16. dot = un cuadrado de 8 px que gira (animación CSS de compositor, en la esquina de arriba a la
+   izquierda) para medir cuánto cuesta UN fotograma del compositor cuando sólo se mueve algo diminuto. */
+.probe-stars .star{display:none!important}
+.probe-ovl .vig,.probe-ovl .scan{display:none!important}
+.probe-bands .bands{display:none!important}
+.probe-walls .wall{display:none!important}
+.probe-hud .hud,.probe-hud .band5,.probe-hud .cap,.probe-hud .foot,.probe-hud .ficha{display:none!important}
+.probe-cards .item:not(.rich){display:none!important}
+.probe-still .art-still{display:none!important}
+.probe-cass .item.rich .stage{display:none!important}   /* v16.1: el cassette rico entero (su pila 3D) */
+.probe-bg #tv,.probe-bg .artwrap{background:transparent!important}   /* v16.1: los dos fondos opacos a pantalla completa */
+.probe-dot-el{position:fixed;left:40px;top:40px;width:8px;height:8px;z-index:60;background:#FEC631;pointer-events:none;
+  -webkit-animation:probeSpin 1s linear infinite;animation:probeSpin 1s linear infinite}
+@-webkit-keyframes probeSpin{from{-webkit-transform:rotate(0deg)}to{-webkit-transform:rotate(360deg)}}
+@keyframes probeSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+/* ===== v16.1 · medidor, banco y ?flat=1 (p8e.js, «v16.1») ========================================= */
+/* ?flat=1: el corredor quieto en un canvas 2D (hermano de .world, debajo: todo lo aplanado está detrás del cassette) */
+.corr-flat{position:absolute;left:0;top:0;display:none;pointer-events:none}
+.flatd{display:none!important}
+/* ?fps=1: esquina opaca diminuta (sin el panel grande, que sesga la medida) */
+.fps-corner{position:fixed;left:0;top:0;width:220px;height:44px;z-index:9998;background:#000;color:#FEC631;
+  font:700 22px/44px "Rubik",Arial,sans-serif;text-align:center;pointer-events:none;white-space:nowrap}
+/* tabla del banco: opaca, legible a 3 m en una sola foto */
+/* v16.2: la tabla cabe en 1400 px de ancho (en el TV se cortó la última columna); 18 filas a 27 px */
+.bench-t{position:fixed;left:0;top:0;width:1920px;height:1080px;z-index:9999;background:#001219;color:#FFFEE8;
+  padding:22px 40px;box-sizing:border-box;font:500 27px/1.25 "Rubik",Arial,sans-serif}
+.bench-t table{width:1400px!important;table-layout:fixed}
+.bench-t th:nth-child(1){width:44px} .bench-t th:nth-child(2){width:560px} .bench-t th:nth-child(3),.bench-t th:nth-child(4),.bench-t th:nth-child(5){width:120px}
+.bench-t td.x{font-size:19px;white-space:nowrap;overflow:hidden}
+.bench-t .bh{font-weight:800;font-size:22px;color:#FEC631;padding:0 0 12px;width:1400px;white-space:normal}
+.bench-t table{border-collapse:collapse;width:100%}
+.bench-t th{text-align:left;font-weight:800;color:#94D2BD;padding:2px 12px;border-bottom:2px solid #94D2BD}
+.bench-t td{padding:0 12px;border-bottom:1px solid rgba(255,254,232,.15)}
+.bench-t td.n{text-align:right;font-weight:800;font-family:"Rubik",Arial,sans-serif}
+
+/* ===== v16.2 · ?cassflat: el cassette quieto, re-montado PLANO encima del corredor (p8e.js) ======== */
+.cflat{position:absolute;z-index:1;pointer-events:none;display:none}
+.cflat>*{position:absolute;left:0;top:0;display:block;-webkit-transform-origin:0 0;transform-origin:0 0}
+.cflat .cf-d{position:absolute;left:0;top:0;display:block}
+.cf-hide{visibility:hidden!important}
+
+/* ===== v16.4 · banco remoto (sólo ?dev=1&remote=1): aviso pequeño y OPACO mientras espera (sin el panel grande, que sesga) */
+.remote-badge{position:fixed;left:40px;top:110px;z-index:9998;background:#000;color:#94D2BD;padding:0 18px;height:52px;
+  font:700 28px/52px "Rubik",Arial,sans-serif;white-space:nowrap;pointer-events:none}
+.remote-badge.meas{color:#FEC631}   /* v16.6: «MIDIENDO n/N · fila» (estático durante la medida) */
+
+/* v16.6 · ?glitchlo=1 (diagnóstico, apagado): el glitch del rótulo a ≈ 12 cambios/s (steps 4 y 5 en vez de 11) */
+.glitchlo .nm.glitching::before{animation-timing-function:steps(4,end)}
+.glitchlo .nm.glitching::after{animation-timing-function:steps(5,end)}
+/* v16.6 · los canvas de la caché de pintado: en el DOM pero fuera de la vista y sin pintar (p8e.js, pcCanvas) */
+.pc-hold{position:absolute;left:0;top:0;width:0;height:0;overflow:hidden;visibility:hidden;pointer-events:none}
+.bands .pypbig{text-transform:uppercase;letter-spacing:.01em}
+
+/* v16.10 · ARRANQUE: la UI del corredor NO se ve durante la intro. No dependemos de que el overlay
+   (z-index 46/48) la tape: el compositor del WRT a veces deja ver los fijos. data-boot lo pone bootStart
+   y lo quita bootOverlayGone; aquí escondemos la UI de raíz. */
+html[data-boot="1"] .hud, html[data-boot="1"] .cap, html[data-boot="1"] .foot, html[data-boot="1"] .ficha,
+html[data-boot="1"] .bands, html[data-boot="1"] .band5, html[data-boot="1"] .vig, html[data-boot="1"] .scan{ visibility:hidden !important; }
